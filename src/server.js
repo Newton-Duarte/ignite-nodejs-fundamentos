@@ -1,33 +1,22 @@
-import http from 'node:http';
+import http from 'node:http'
 
-const users = [
-  {
-    id: 1,
-    name: 'John Doe',
-    email: 'johndoe@example.com',
-  }
-]
+import { json } from './middlewares/json.js'
+import { routes } from './routes.js'
 
-const server = http.createServer((request, response) => {
-  const { method, url } = request
+const server = http.createServer(async (req, res) => {
+  const { method, url } = req
 
-  if (method === 'GET' && url === '/users') {
-    return response
-      .setHeader('Content-type', 'application/json')
-      .end(JSON.stringify(users))
-  }
+  await json(req, res)
 
-  if (method === 'POST' && url === '/users') {
-    users.push({
-      id: 1,
-      name: 'John Doe',
-      email: 'johndoe@example.com',
-    })
+  const route = routes.find(route => {
+    return route.method === method && route.path === url
+  })
 
-    return response.writeHead(201).end()
+  if (route) {
+    return route.handler(req, res)
   }
 
-  return response.writeHead(404).end()
+  return res.writeHead(404).end()
 })
 
-server.listen(3333, () => console.log('Server running on por 3333!'));
+server.listen(3333)
